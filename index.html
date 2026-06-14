@@ -61,13 +61,13 @@
     <script src="https://unpkg.com/@adminkit/core@latest/dist/js/app.js"></script>
     
     <script>
-        // TODO: 后端部署后改成你的服务器地址
-        const API_BASE = "http://49.235.59.236:5000/api";
+        // 修改这里：API_BASE 不要带 /api
+        const API_BASE = "http://49.235.59.236:5000";
         
         async function loadHouses() {
             document.querySelector("#houseTable tbody").innerHTML = "<tr><td colspan='6' class='text-center'>加载中...</td></tr>";
             try {
-                const response = await fetch(`${API_BASE}/house`);
+                const response = await fetch(`${API_BASE}/api/house`);
                 if (!response.ok) throw new Error("请求失败");
                 const houses = await response.json();
                 renderTable(houses);
@@ -79,7 +79,7 @@
         
         async function loadHousesByStatus(status) {
             try {
-                const response = await fetch(`${API_BASE}/house/status/${status}`);
+                const response = await fetch(`${API_BASE}/api/house/status/${status}`);
                 const houses = await response.json();
                 renderTable(houses);
             } catch (error) {
@@ -125,7 +125,7 @@
         
         async function addHouse(house) {
             try {
-                const response = await fetch(`${API_BASE}/house`, {
+                const response = await fetch(`${API_BASE}/api/house`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(house)
