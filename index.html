@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>房屋租赁管理系统</title>
+    <!-- AdminKit CSS CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/@adminkit/core@latest/dist/css/app.css">
+</head>
+<body>
+    <div class="wrapper">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🏠 租赁管理系统</h2>
+            </div>
+            <ul class="sidebar-nav">
+                <li class="active"><a href="#">房屋管理</a></li>
+                <li><a href="#">租客管理</a></li>
+                <li><a href="#">合同管理</a></li>
+            </ul>
+        </aside>
+        
+        <!-- 主内容区 -->
+        <div class="main">
+            <nav class="navbar navbar-light">
+                <div class="container-fluid">
+                    <h1>房屋列表</h1>
+                </div>
+            </nav>
+            
+            <main class="content p-4">
+                <!-- 按钮组 -->
+                <div class="mb-3">
+                    <button class="btn btn-primary" onclick="loadHouses()">📋 所有房屋</button>
+                    <button class="btn btn-success" onclick="loadHousesByStatus('空闲')">✅ 空闲房屋</button>
+                    <button class="btn btn-info" onclick="showAddHouse()">➕ 添加房屋</button>
+                </div>
+                
+                <!-- 房屋表格 -->
+                <table class="table table-bordered" id="houseTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>地址</th>
+                            <th>户型</th>
+                            <th>面积(㎡)</th>
+                            <th>月租金(¥)</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="6" class="text-center">点击按钮加载数据</td></tr>
+                    </tbody>
+                </table>
+            </main>
+        </div>
+    </div>
+
+    <!-- AdminKit JS CDN -->
+    <script src="https://unpkg.com/@adminkit/core@latest/dist/js/app.js"></script>
+    
+    <script>
+        // TODO: 后端部署后改成你的服务器地址
+        const API_BASE = "http://你的服务器IP:5000/api";
+        
+        async function loadHouses() {
+            document.querySelector("#houseTable tbody").innerHTML = "<tr><td colspan='6' class='text-center'>加载中...</td></tr>";
+            try {
+                const response = await fetch(`${API_BASE}/house`);
+                if (!response.ok) throw new Error("请求失败");
+                const houses = await response.json();
+                renderTable(houses);
+            } catch (error) {
+                document.querySelector("#houseTable tbody").innerHTML = 
+                    "<tr><td colspan='6' class='text-center text-danger'>连接失败，请检查后端API是否已部署</td></tr>";
+            }
+        }
+        
+        async function loadHousesByStatus(status) {
+            try {
+                const response = await fetch(`${API_BASE}/house/status/${status}`);
+                const houses = await response.json();
+                renderTable(houses);
+            } catch (error) {
+                alert("加载失败: " + error.message);
+            }
+        }
+        
+        function renderTable(houses) {
+            const tbody = document.querySelector("#houseTable tbody");
+            if (!houses || houses.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='6' class='text-center'>暂无数据</td></tr>";
+                return;
+            }
+            tbody.innerHTML = houses.map(house => `
+                <tr>
+                    <td>${house.id}</td>
+                    <td>${house.address || ''}</td>
+                    <td>${house.roomType || ''}</td>
+                    <td>${house.area || 0}㎡</td>
+                    <td>¥${house.rent || 0}</td>
+                    <td class="${house.status === '空闲' ? 'text-success' : 'text-danger'} fw-bold">${house.status || ''}</td>
+                </tr>
+            `).join("");
+        }
+        
+        function showAddHouse() {
+            const address = prompt("请输入地址:");
+            if (!address) return;
+            const roomType = prompt("请输入户型 (如: 2室1厅):");
+            if (!roomType) return;
+            const area = prompt("请输入面积 (平方米):");
+            if (!area) return;
+            const rent = prompt("请输入月租金:");
+            if (!rent) return;
+            
+            addHouse({
+                address: address,
+                roomType: roomType,
+                area: parseFloat(area),
+                rent: parseFloat(rent)
+            });
+        }
+        
+        async function addHouse(house) {
+            try {
+                const response = await fetch(`${API_BASE}/house`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(house)
+                });
+                if (response.ok) {
+                    alert("添加成功！");
+                    loadHouses();
+                } else {
+                    alert("添加失败");
+                }
+            } catch (error) {
+                alert("网络错误: " + error.message);
+            }
+        }
+        
+        // 页面加载时自动加载
+        loadHouses();
+    </script>
+</body>
+</html>
